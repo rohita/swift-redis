@@ -84,15 +84,6 @@ struct Protocol {
     }
 }
 
-enum RESPData: Equatable {
-    case SimpleString(String)
-    case Error(String)
-    case Integer(Int)
-    case BulkString(String)
-    case Array([RESPData])
-    case Null
-}
-
 extension UInt8 {
     func toChar() -> Character {
         Character(UnicodeScalar(self))
