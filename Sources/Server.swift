@@ -13,7 +13,8 @@ class Server {
     }
     
     func start() throws {
-        let serverBootstrap = makeBootstrap()
+        let clientHandler = ClientConnectionHandler()
+        let serverBootstrap = makeBootstrap(clientHandler: clientHandler)
         do {
             let channel = try serverBootstrap.bind(host: host, port: port).wait()
             print("Listening on \(String(describing: channel.localAddress))...")
@@ -33,7 +34,7 @@ class Server {
         print("Client connection closed")
     }
     
-    func makeBootstrap() -> ServerBootstrap {
+    func makeBootstrap(clientHandler: ClientConnectionHandler) -> ServerBootstrap {
         let bootstrap = ServerBootstrap(group: group)
             // Specify backlog and enable SO_REUSEADDR for the server itself
             .serverChannelOption(.backlog, value: 256)
@@ -44,7 +45,7 @@ class Server {
                 // Ensure we don't read faster than we can write by adding the BackPressureHandler into the pipeline.
                 channel.eventLoop.makeCompletedFuture {
                     try channel.pipeline.syncOperations.addHandler(BackPressureHandler())
-                    try channel.pipeline.syncOperations.addHandler(ClientConnectionHandler(dataStore: DataStore()))
+                    try channel.pipeline.syncOperations.addHandler(clientHandler)
                 }
             }
         

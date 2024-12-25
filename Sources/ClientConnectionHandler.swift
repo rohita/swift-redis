@@ -7,11 +7,7 @@ class ClientConnectionHandler: ChannelInboundHandler {
     typealias OutboundOut = ByteBuffer
     let respHeader: RespHandler = RespHandler()
     let commandHandler: Command = Command()
-    var dataStore: DataStore
-    
-    init(dataStore: DataStore) {
-        self.dataStore = dataStore
-    }
+    var dataStore: DataStore = DataStore()
     
     // channel is connected
     func channelActive(context: ChannelHandlerContext) {
@@ -25,11 +21,11 @@ class ClientConnectionHandler: ChannelInboundHandler {
             return
         }
         
-        print("Received:\n\(received)")
+        //print("Received:\n\(received)")
         let (clientResp, _) = respHeader.parse(from: received.data(using: .utf8)!)
         let serverResp = commandHandler.handle(clientResp, dataStore: self.dataStore)
         let respString = serverResp.encode()
-        print("Sending:\n\(respString)")
+        //print("Sending:\n\(respString)")
         let respBuffer = context.channel.allocator.buffer(string: respString)
         context.writeAndFlush(Self.wrapOutboundOut(respBuffer), promise: nil)
     }
@@ -43,4 +39,6 @@ class ClientConnectionHandler: ChannelInboundHandler {
         context.close(promise: nil)
     }
 }
+
+extension ClientConnectionHandler: @unchecked Sendable {}
 
