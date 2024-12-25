@@ -44,7 +44,7 @@ class Server {
                 // Ensure we don't read faster than we can write by adding the BackPressureHandler into the pipeline.
                 channel.eventLoop.makeCompletedFuture {
                     try channel.pipeline.syncOperations.addHandler(BackPressureHandler())
-                    try channel.pipeline.syncOperations.addHandler(ClientConnectionHandler())
+                    try channel.pipeline.syncOperations.addHandler(ClientConnectionHandler(dataStore: DataStore()))
                 }
             }
         

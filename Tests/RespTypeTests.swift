@@ -1,7 +1,7 @@
 import Testing
 @testable import SwiftRedis
 
-struct RESPDataTests {
+struct RespTypeTests {
     @Test(arguments: [
         (RespType.SimpleString("OK"), "+OK\r\n"),
         (RespType.Error("Error"),   "-Error\r\n"),

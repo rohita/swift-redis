@@ -3,7 +3,7 @@ import Testing
 
 // generally recommended that a Swift structure or actor be used instead
 // of a class because it allows the Swift compiler to better-enforce concurrency safety.
-struct ProtocolTests {
+struct RespHandlerTests {
     
     @Test(arguments: [
         // Test invalid Message
