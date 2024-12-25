@@ -4,7 +4,7 @@ import Testing
 struct CommandsTests {
     @Test(arguments: [
         // Echo Tests
-        (RESPData.Array([.BulkString("ECHO")]), RESPData.Error("ERR wrong number of arguments for 'echo' command")),
+        (RespType.Array([.BulkString("ECHO")]), RespType.Error("ERR wrong number of arguments for 'echo' command")),
         (.Array([.BulkString("echo"), .BulkString("Hello")]), .BulkString("Hello")),
         (.Array([.BulkString("echo"), .BulkString("Hello"), .BulkString("World")]), .Error("ERR wrong number of arguments for 'echo' command")),
         
@@ -13,7 +13,7 @@ struct CommandsTests {
         (.Array([.BulkString("ping"), .BulkString("Hello")]), .BulkString("Hello")),
         (.Array([.BulkString("ping"), .BulkString("Hello"), .BulkString("Hello")]), .Error("ERR wrong number of arguments for 'ping' command"))
         
-    ]) func testHandleCommand(command: RESPData, expected: RESPData) {
+    ]) func testHandleCommand(command: RespType, expected: RespType) {
         #expect(Command().handle(command: command) == expected)
     }
 }

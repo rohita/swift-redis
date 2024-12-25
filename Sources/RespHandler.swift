@@ -1,10 +1,10 @@
 import Foundation
 
-struct Protocol {
-    func extractFrame(from buffer: Data) -> (RESPData, Int) {
+struct RespHandler {
+    func parse(from buffer: Data) -> (RespType, Int) {
         let (payload, size) = readUntilCrlf(from: buffer)
         guard let payload else {
-            return (RESPData.Null, 0)
+            return (RespType.Null, 0)
         }
         
         switch buffer[0].toChar() {
@@ -13,11 +13,11 @@ struct Protocol {
         case ":": return (.Integer(Int(payload.toString())!), size)
         case "$": return parseBulkString(from: buffer)
         case "*": return parseArray(from: buffer)
-        default: return (RESPData.Null, 0)
+        default: return (RespType.Null, 0)
         }
     }
     
-    func parseBulkString(from buffer: Data) -> (RESPData, Int) {
+    private func parseBulkString(from buffer: Data) -> (RespType, Int) {
         let (payload, bytesConsumed) = readUntilCrlf(from: buffer)
         guard let payload else {
             return (.Null, 0)
@@ -39,7 +39,7 @@ struct Protocol {
         return (.BulkString(Data(buffer[bytesConsumed..<endOfBulkStringIndex]).toString()), endOfBulkStringIndex+2)
     }
     
-    func parseArray(from buffer: Data) -> (RESPData, Int) {
+    private func parseArray(from buffer: Data) -> (RespType, Int) {
         var (payload, bytesConsumed) = readUntilCrlf(from: buffer)
         guard let payload else {
             return (.Null, 0)
@@ -57,9 +57,9 @@ struct Protocol {
             return (.Array([]), bytesConsumed)
         }
         
-        var array: [RESPData] = []
+        var array: [RespType] = []
         for _ in 0..<arrayLength {
-            let (arrayItem, len) = extractFrame(from: Data(buffer[bytesConsumed...]))
+            let (arrayItem, len) = parse(from: Data(buffer[bytesConsumed...]))
             
             if arrayItem == .Null {
                 return (.Null, 0)
@@ -72,7 +72,7 @@ struct Protocol {
         return (.Array(array), bytesConsumed)
     }
     
-    func readUntilCrlf(from buffer: Data) -> (Data?, Int) {
+    private func readUntilCrlf(from buffer: Data) -> (Data?, Int) {
         var data: Data = Data()
         for i in 2..<buffer.count {
             if buffer[i-1] == "\r" && buffer[i] == "\n" {

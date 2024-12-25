@@ -7,7 +7,7 @@ struct ProtocolTests {
     
     @Test(arguments: [
         // Test invalid Message
-        ("PING\r\n", (RESPData.Null, 0)),
+        ("PING\r\n", (RespType.Null, 0)),
         
         // Test cases for Simple Strings
         ("+Par",         (.Null, 0)),
@@ -43,9 +43,9 @@ struct ProtocolTests {
         ("*3\r\n:1\r\n:2\r\n:3\r\n",                (.Array([.Integer(1), .Integer(2), .Integer(3)]), 16)),
         ("*3\r\n:1\r\n:2\r\n:3\r\n+OK",             (.Array([.Integer(1), .Integer(2), .Integer(3)]), 16))
         
-    ]) func testReadFrameSimpleString(input: String, expected: (RESPData, Int)) {
+    ]) func testReadFrameSimpleString(input: String, expected: (RespType, Int)) {
         let buffer = input.data(using: .utf8)!
-        let actual = Protocol().extractFrame(from: buffer)
+        let actual = RespHandler().parse(from: buffer)
         #expect(actual == expected)
     }
 }

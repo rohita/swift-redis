@@ -1,14 +1,14 @@
 
-enum RESPData: Equatable {
+enum RespType: Equatable {
     case SimpleString(String)
     case Error(String)
     case Integer(Int)
     case BulkString(String)
-    case Array([RESPData])
+    case Array([RespType])
     case Null
 }
 
-extension RESPData {
+extension RespType {
     func encode() -> String {
         switch self {
         case .SimpleString(let string): return "+\(string)\r\n"

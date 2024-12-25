@@ -1,7 +1,6 @@
 
 struct Command {
-    
-    func handle(command resp: RESPData) -> RESPData {
+    func handle(_ resp: RespType) -> RespType {
         let (commandName, arguments) = switch resp {
         case .Array(let array): (array[0].unpackStr(), array)
         default: fatalError("Unexpected command format")
@@ -14,7 +13,7 @@ struct Command {
         }
     }
     
-    private func handleEcho(arguments: [RESPData]) -> RESPData {
+    private func handleEcho(arguments: [RespType]) -> RespType {
         if arguments.count == 2 {
             return .BulkString(arguments[1].unpackStr())
         } else {
@@ -22,7 +21,7 @@ struct Command {
         }
     }
     
-    private func handlePing(arguments: [RESPData]) -> RESPData {
+    private func handlePing(arguments: [RespType]) -> RespType {
         if arguments.count == 1 {
             return .SimpleString("PONG")
         } else if arguments.count == 2 {
