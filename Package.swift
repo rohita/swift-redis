@@ -5,6 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "SwiftRedis",
+    platforms: [.macOS(.v15)],
     dependencies: [
         .package(url: "https://github.com/apple/swift-nio.git", .upToNextMajor(from: "2.77.0")),
     ],

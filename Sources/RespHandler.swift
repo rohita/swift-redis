@@ -84,18 +84,4 @@ struct RespHandler {
     }
 }
 
-extension UInt8 {
-    func toChar() -> Character {
-        Character(UnicodeScalar(self))
-    }
-    
-    static func ==(lhs: UInt8, rhs: Character) -> Bool {
-        lhs.toChar() == rhs
-    }
-}
 
-extension Data {
-    func toString() -> String {
-        String(decoding: self, as: UTF8.self)
-    }
-}

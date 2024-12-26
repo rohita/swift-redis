@@ -17,8 +17,26 @@ struct Command {
     
     private func handleSet(arguments: [RespType], dataStore: DataStore) -> RespType {
         if arguments.count >= 3 {
-            dataStore.setItem(arguments[1].unpackStr(), value: arguments[2].unpackStr())
-            return .SimpleString("OK")
+            
+            if arguments.count == 3 {
+                dataStore.setItem(arguments[1].unpackStr(), value: arguments[2].unpackStr())
+                return .SimpleString("OK")
+            } else if arguments.count == 5 {
+                let expiryMode = arguments[3].unpackStr()
+                guard let expiryTime = Int(arguments[4].unpackStr()) else {
+                    return .Error("ERR value is not an integer or out of range")
+                }
+                
+                switch expiryMode.uppercased() {
+                case "EX": dataStore.setItem(arguments[1].unpackStr(), value: arguments[2].unpackStr(), expiryTimeMs: expiryTime * 1000)
+                case "PX": dataStore.setItem(arguments[1].unpackStr(), value: arguments[2].unpackStr(), expiryTimeMs: expiryTime)
+                default: return .Error("ERR invalid expiry mode")
+                }
+                
+                return .SimpleString("OK")
+            }
+            
+            return .Error("ERR syntax error")
         } else {
             return .Error("ERR wrong number of arguments for 'set' command")
         }
