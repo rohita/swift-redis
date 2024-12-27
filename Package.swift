@@ -8,6 +8,7 @@ let package = Package(
     platforms: [.macOS(.v15)],
     dependencies: [
         .package(url: "https://github.com/apple/swift-nio.git", .upToNextMajor(from: "2.77.0")),
+        .package(url: "https://github.com/apple/swift-collections.git", .upToNextMajor(from: "1.1.0")),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -18,7 +19,8 @@ let package = Package(
                 .product(name: "NIO", package: "swift-nio"),
                 .product(name: "NIOCore", package: "swift-nio"),
                 .product(name: "NIOPosix", package: "swift-nio"),
-                .product(name: "NIOHTTP1", package: "swift-nio")
+                .product(name: "NIOHTTP1", package: "swift-nio"),
+                .product(name: "Collections", package: "swift-collections"),
             ],
             path: "Sources"),
         .testTarget(

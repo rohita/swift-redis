@@ -55,6 +55,12 @@ struct CommandTests {
         (.Array([.BulkString("decr")]), .Error("ERR wrong number of arguments for 'decr' command")),
         (.Array([.BulkString("decr"), .SimpleString("key")]), .Error("ERR value is not an integer or out of range")),
         
+        // Lpush Tests
+        (.Array([.BulkString("lpush")]), .Error("ERR wrong number of arguments for 'lpush' command")),
+        
+        // Rpush Tests
+        (.Array([.BulkString("rpush")]), .Error("ERR wrong number of arguments for 'rpush' command")),
+        
     ]) func testHandleCommand(command: RespType, expected: RespType) {
         let dataStore = DataStore()
         dataStore.setItem("key", value: "value")
@@ -83,7 +89,25 @@ struct CommandTests {
         #expect(result4 == .Integer(0))
     }
     
+    @Test func testLpushLrange() {
+        let dataStore = DataStore()
+        let result1 = Command().handle(.Array([.BulkString("lpush"), .SimpleString("klp"), .SimpleString("second")]), dataStore: dataStore)
+        let result2 = Command().handle(.Array([.BulkString("lpush"), .SimpleString("klp"), .SimpleString("first")]), dataStore: dataStore)
+        let result3 = Command().handle(.Array([.BulkString("lrange"), .SimpleString("klp"), .BulkString("0"), .BulkString("2")]), dataStore: dataStore)
+        #expect(result1 == .Integer(1))
+        #expect(result2 == .Integer(2))
+        #expect(result3 == .Array([.BulkString("first"), .BulkString("second")]))
+    }
     
+    @Test func testRpushLrange() {
+        let dataStore = DataStore()
+        let result1 = Command().handle(.Array([.BulkString("rpush"), .SimpleString("klp"), .SimpleString("first")]), dataStore: dataStore)
+        let result2 = Command().handle(.Array([.BulkString("rpush"), .SimpleString("klp"), .SimpleString("second")]), dataStore: dataStore)
+        let result3 = Command().handle(.Array([.BulkString("lrange"), .SimpleString("klp"), .BulkString("0"), .BulkString("2")]), dataStore: dataStore)
+        #expect(result1 == .Integer(1))
+        #expect(result2 == .Integer(2))
+        #expect(result3 == .Array([.BulkString("first"), .BulkString("second")]))
+    }
 
     @Test func testGetWithExpiry() {
         let dataStore = DataStore()
@@ -123,12 +147,12 @@ struct CommandTests {
         let expectedExpiry = Date().msSinceEpoch + UInt64(ex * 1000)
         let result = Command().handle(exCommand, dataStore: dataStore)
         let getResult = Command().handle(.Array([.BulkString("get"), .SimpleString(key)]), dataStore: dataStore)
-        let stored = dataStore.data[key]!
+        let stored = dataStore.getRawData(key)!
         let diff = stored.expiryTimeSinceEpochMs - expectedExpiry
 
         #expect(result == .SimpleString("OK"))
         #expect(getResult == .BulkString(value))
-        #expect(stored.value == value)
+        #expect(stored.value as! String == value)
         #expect(diff == 0)
     }
     
@@ -147,11 +171,11 @@ struct CommandTests {
         ])
         let expectedExpiry = Date().msSinceEpoch + UInt64(px)
         let result = Command().handle(pxCommand, dataStore: dataStore)
-        let stored = dataStore.data[key]!
+        let stored = dataStore.getRawData(key)!
         let diff = stored.expiryTimeSinceEpochMs - expectedExpiry
 
         #expect(result == .SimpleString("OK"))
-        #expect(stored.value == value)
+        #expect(stored.value as! String == value)
         #expect(diff == 0)
     }
     

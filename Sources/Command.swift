@@ -15,6 +15,9 @@ struct Command {
         case "DEL" : return self.handleDel(arguments: arguments, dataStore: dataStore)
         case "INCR" : return self.handleIncr(arguments: arguments, dataStore: dataStore)
         case "DECR" : return self.handleDecr(arguments: arguments, dataStore: dataStore)
+        case "LPUSH" : return self.handleLpush(arguments: arguments, dataStore: dataStore)
+        case "RPUSH" : return self.handleRpush(arguments: arguments, dataStore: dataStore)
+        case "LRANGE" : return self.handleLrange(arguments: arguments, dataStore: dataStore)
         default: return self.handleUnrecognisedCommand(arguments: arguments)
         }
     }
@@ -62,7 +65,7 @@ struct Command {
         if arguments.count >= 2 {
             var count = 0
             for c in arguments[1...] {
-                if let _ = dataStore.data[c.unpackStr()] {
+                if dataStore.hasKey(c.unpackStr()) {
                     count += 1
                 }
             }
@@ -75,8 +78,8 @@ struct Command {
         if arguments.count >= 2 {
             var count = 0
             for c in arguments[1...] {
-                if let _ = dataStore.data[c.unpackStr()] {
-                    dataStore.data.removeValue(forKey: c.unpackStr())
+                if dataStore.hasKey(c.unpackStr()) {
+                    dataStore.remove(c.unpackStr())
                     count += 1
                 }
             }
@@ -105,6 +108,51 @@ struct Command {
             return .Error("ERR value is not an integer or out of range")
         }
         return .Error("ERR wrong number of arguments for 'decr' command")
+    }
+    
+    private func handleLpush(arguments: [RespType], dataStore: DataStore) -> RespType {
+        if arguments.count >= 2 {
+            var totalCount: Int = 0
+            let key = arguments[1].unpackStr()
+            for c in arguments[2...] {
+                guard let count = dataStore.prepend(key, value: c.unpackStr()) else {
+                    return .Error("WRONGTYPE Operation against a key holding the wrong kind of value")
+                }
+                totalCount = count
+            }
+            return .Integer(totalCount)
+        }
+        return .Error("ERR wrong number of arguments for 'lpush' command")
+    }
+    
+    private func handleRpush(arguments: [RespType], dataStore: DataStore) -> RespType {
+        if arguments.count >= 2 {
+            var totalCount: Int = 0
+            let key = arguments[1].unpackStr()
+            for c in arguments[2...] {
+                guard let count = dataStore.append(key, value: c.unpackStr()) else {
+                    return .Error("WRONGTYPE Operation against a key holding the wrong kind of value")
+                }
+                totalCount = count
+            }
+            return .Integer(totalCount)
+        }
+        return .Error("ERR wrong number of arguments for 'rpush' command")
+    }
+    
+    private func handleLrange(arguments: [RespType], dataStore: DataStore) -> RespType {
+        if arguments.count == 4 {
+            let key = arguments[1].unpackStr()
+            let start = Int(arguments[2].unpackStr())!
+            let stop = Int(arguments[3].unpackStr())!
+            
+            guard let range = dataStore.lrange(key, start: start, stop: stop) else {
+                return .Error("WRONGTYPE Operation against a key holding the wrong kind of value")
+            }
+            
+            return .Array(range.map { .BulkString($0) })
+        }
+        return .Error("ERR wrong number of arguments for 'lrange' command")
     }
     
     private func handleEcho(arguments: [RespType]) -> RespType {

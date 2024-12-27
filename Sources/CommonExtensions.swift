@@ -21,3 +21,21 @@ extension Date {
         UInt64(timeIntervalSince1970 * 1000)
     }
 }
+
+extension Int {
+    init?(_ value: Any) {
+        if let stringValue = value as? String {
+            self.init(stringValue)
+        } else {
+            return nil
+        }
+    }
+    
+    init?(_ value: String?) {
+        if let stringValue = value {
+            self.init(stringValue)
+        } else {
+            return nil
+        }
+    }
+}
