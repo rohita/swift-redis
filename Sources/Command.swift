@@ -11,7 +11,8 @@ struct Command {
         case "PING": return self.handlePing(arguments: arguments)
         case "SET" : return self.handleSet(arguments: arguments, dataStore: dataStore)
         case "GET" : return self.handleGet(arguments: arguments, dataStore: dataStore)
-        default: return .Error("ERR unknown command \(commandName)")
+        case "EXISTS" : return self.handleExists(arguments: arguments, dataStore: dataStore)
+        default: return self.handleUnrecognisedCommand(arguments: arguments)
         }
     }
     
@@ -54,6 +55,19 @@ struct Command {
         }
     }
     
+    private func handleExists(arguments: [RespType], dataStore: DataStore) -> RespType {
+        if arguments.count >= 2 {
+            var count = 0
+            for c in arguments[1...] {
+                if let _ = dataStore.data[c.unpackStr()] {
+                    count += 1
+                }
+            }
+            return .Integer(count)
+        }
+        return .Error("ERR wrong number of arguments for 'exists' command")
+    }
+    
     private func handleEcho(arguments: [RespType]) -> RespType {
         if arguments.count == 2 {
             return .BulkString(arguments[1].unpackStr())
@@ -70,6 +84,11 @@ struct Command {
         } else {
             return .Error("ERR wrong number of arguments for 'ping' command")
         }
+    }
+    
+    private func handleUnrecognisedCommand(arguments: [RespType]) -> RespType {
+        let args = arguments[1...].map { $0.unpackStr() }.joined(separator: " ")
+        return .Error("ERR unknown command '\(arguments[0].unpackStr())', with args beginning with: '\(args)'")
     }
 }
 

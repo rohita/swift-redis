@@ -3,7 +3,6 @@ import Foundation
 @testable import SwiftRedis
 
 struct CommandTests {
-    var dataStore: DataStore = DataStore()
     
     @Test(arguments: [
         // Echo Tests
@@ -23,6 +22,7 @@ struct CommandTests {
         
         // Get Tests
         (.Array([.BulkString("get")]), .Error("ERR wrong number of arguments for 'get' command")),
+        (.Array([.BulkString("get"), .SimpleString("key")]), .BulkString("value")),
         (.Array([.BulkString("get"), .SimpleString("key_notExist")]), .Null),
         
         // Set with Expire Errors
@@ -30,17 +30,25 @@ struct CommandTests {
         (.Array([.BulkString("set"), .SimpleString("key"), .SimpleString("value"), .SimpleString("px")]), .Error("ERR syntax error")),
         (.Array([.BulkString("set"), .SimpleString("key"), .SimpleString("value"), .SimpleString("foo")]), .Error("ERR syntax error")),
         
+        // Unrecognised Command
+        (.Array([.BulkString("foo")]), .Error("ERR unknown command 'foo', with args beginning with: ''")),
+        (.Array([.BulkString("foo"), .SimpleString("key")]), .Error("ERR unknown command 'foo', with args beginning with: 'key'")),
+        (.Array([.BulkString("foo"), .SimpleString("key bar")]), .Error("ERR unknown command 'foo', with args beginning with: 'key bar'")),
+        
+        // Exists Tests
+        (.Array([.BulkString("exists")]), .Error("ERR wrong number of arguments for 'exists' command")),
+        (.Array([.BulkString("exists"), .SimpleString("invalid key")]), .Integer(0)),
+        (.Array([.BulkString("exists"), .SimpleString("key")]), .Integer(1)),
+        (.Array([.BulkString("exists"), .SimpleString("invalid key"), .SimpleString("key")]), .Integer(1)),
+        
     ]) func testHandleCommand(command: RespType, expected: RespType) {
+        let dataStore = DataStore()
+        dataStore.setItem("key", value: "value")
         #expect(Command().handle(command, dataStore: dataStore) == expected)
     }
-    
-    @Test func testGetWithNoExpiry() {
-        Command().handle(.Array([.BulkString("set"), .SimpleString("key"), .SimpleString("value")]), dataStore: dataStore)
-        sleep(1)
-        #expect(Command().handle(.Array([.BulkString("get"), .SimpleString("key")]), dataStore: dataStore) == .BulkString("value"))
-    }
-    
+
     @Test func testGetWithExpiry() {
+        let dataStore = DataStore()
         let key = "key"
         let value = "value"
         let px = 100
@@ -62,6 +70,7 @@ struct CommandTests {
     }
     
     @Test func testSetWithExpiryEx() {
+        let dataStore = DataStore()
         let key = "key"
         let value = "value"
         let ex = 1
@@ -86,6 +95,7 @@ struct CommandTests {
     }
     
     @Test func testSetWithExpiryPx() {
+        let dataStore = DataStore()
         let key = "key"
         let value = "value"
         let px = 100
