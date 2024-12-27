@@ -27,6 +27,28 @@ class DataStore: @unchecked Sendable {
         }
     }
     
+    func incr(_ key: String) -> String {
+        let item = self.data[key] ?? DataEntry(value: "0", expiryTimeSinceEpochMs: 0)
+        if let intValue = Int(item.value) {
+            dataSyncQueue.asyncAndWait {
+                self.data[key] = DataEntry(value: String(intValue + 1), expiryTimeSinceEpochMs: item.expiryTimeSinceEpochMs)
+            }
+        }
+        
+        return self.data[key]!.value
+    }
+    
+    func decr(_ key: String) -> String {
+        let item = self.data[key] ?? DataEntry(value: "0", expiryTimeSinceEpochMs: 0)
+        if let intValue = Int(item.value) {
+            dataSyncQueue.asyncAndWait {
+                self.data[key] = DataEntry(value: String(intValue - 1), expiryTimeSinceEpochMs: item.expiryTimeSinceEpochMs)
+            }
+        }
+        
+        return self.data[key]!.value
+    }
+    
     struct DataEntry {
         let value: String
         let expiryTimeSinceEpochMs: UInt64

@@ -12,6 +12,9 @@ struct Command {
         case "SET" : return self.handleSet(arguments: arguments, dataStore: dataStore)
         case "GET" : return self.handleGet(arguments: arguments, dataStore: dataStore)
         case "EXISTS" : return self.handleExists(arguments: arguments, dataStore: dataStore)
+        case "DEL" : return self.handleDel(arguments: arguments, dataStore: dataStore)
+        case "INCR" : return self.handleIncr(arguments: arguments, dataStore: dataStore)
+        case "DECR" : return self.handleDecr(arguments: arguments, dataStore: dataStore)
         default: return self.handleUnrecognisedCommand(arguments: arguments)
         }
     }
@@ -66,6 +69,42 @@ struct Command {
             return .Integer(count)
         }
         return .Error("ERR wrong number of arguments for 'exists' command")
+    }
+    
+    private func handleDel(arguments: [RespType], dataStore: DataStore) -> RespType {
+        if arguments.count >= 2 {
+            var count = 0
+            for c in arguments[1...] {
+                if let _ = dataStore.data[c.unpackStr()] {
+                    dataStore.data.removeValue(forKey: c.unpackStr())
+                    count += 1
+                }
+            }
+            return .Integer(count)
+        }
+        return .Error("ERR wrong number of arguments for 'del' command")
+    }
+    
+    private func handleIncr(arguments: [RespType], dataStore: DataStore) -> RespType {
+        if arguments.count == 2 {
+            let key = arguments[1].unpackStr()
+            if let value = Int(dataStore.incr(key)) {
+                return .Integer(value)
+            }
+            return .Error("ERR value is not an integer or out of range")
+        }
+        return .Error("ERR wrong number of arguments for 'incr' command")
+    }
+    
+    private func handleDecr(arguments: [RespType], dataStore: DataStore) -> RespType {
+        if arguments.count == 2 {
+            let key = arguments[1].unpackStr()
+            if let value = Int(dataStore.decr(key)) {
+                return .Integer(value)
+            }
+            return .Error("ERR value is not an integer or out of range")
+        }
+        return .Error("ERR wrong number of arguments for 'decr' command")
     }
     
     private func handleEcho(arguments: [RespType]) -> RespType {

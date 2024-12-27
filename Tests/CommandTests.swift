@@ -41,11 +41,49 @@ struct CommandTests {
         (.Array([.BulkString("exists"), .SimpleString("key")]), .Integer(1)),
         (.Array([.BulkString("exists"), .SimpleString("invalid key"), .SimpleString("key")]), .Integer(1)),
         
+        // Del Tests
+        (.Array([.BulkString("del")]), .Error("ERR wrong number of arguments for 'del' command")),
+        (.Array([.BulkString("del"), .SimpleString("del key")]), .Integer(1)),
+        (.Array([.BulkString("del"), .SimpleString("invalid key")]), .Integer(0)),
+        (.Array([.BulkString("del"), .SimpleString("del key2"), .SimpleString("invalid key")]), .Integer(1)),
+        
+        // Incr Tests
+        (.Array([.BulkString("incr")]), .Error("ERR wrong number of arguments for 'incr' command")),
+        (.Array([.BulkString("incr"), .SimpleString("key")]), .Error("ERR value is not an integer or out of range")),
+                
+        // Decr Tests
+        (.Array([.BulkString("decr")]), .Error("ERR wrong number of arguments for 'decr' command")),
+        (.Array([.BulkString("decr"), .SimpleString("key")]), .Error("ERR value is not an integer or out of range")),
+        
     ]) func testHandleCommand(command: RespType, expected: RespType) {
         let dataStore = DataStore()
         dataStore.setItem("key", value: "value")
+        dataStore.setItem("del key", value: "value")
+        dataStore.setItem("del key2", value: "value")
         #expect(Command().handle(command, dataStore: dataStore) == expected)
     }
+    
+    @Test func testIncrWithValidKey() {
+        let dataStore = DataStore()
+        let result1 = Command().handle(.Array([.BulkString("incr"), .SimpleString("ki")]), dataStore: dataStore)
+        let result2 = Command().handle(.Array([.BulkString("incr"), .SimpleString("ki")]), dataStore: dataStore)
+        #expect(result1 == .Integer(1))
+        #expect(result2 == .Integer(2))
+    }
+    
+    @Test func testDecrWithValidKey() {
+        let dataStore = DataStore()
+        let result1 = Command().handle(.Array([.BulkString("incr"), .SimpleString("kd")]), dataStore: dataStore)
+        let result2 = Command().handle(.Array([.BulkString("incr"), .SimpleString("kd")]), dataStore: dataStore)
+        let result3 = Command().handle(.Array([.BulkString("decr"), .SimpleString("kd")]), dataStore: dataStore)
+        let result4 = Command().handle(.Array([.BulkString("decr"), .SimpleString("kd")]), dataStore: dataStore)
+        #expect(result1 == .Integer(1))
+        #expect(result2 == .Integer(2))
+        #expect(result3 == .Integer(1))
+        #expect(result4 == .Integer(0))
+    }
+    
+    
 
     @Test func testGetWithExpiry() {
         let dataStore = DataStore()
